@@ -4,7 +4,7 @@ alkana
 anthropic
 google-cloud-speech
 google-generativeai
--e akari_chatgpt_bot/gpt-stream-json-parser/
+-e lib/akari_chatgpt_bot/gpt-stream-json-parser/
 grpcio
 grpcio-tools
 langchain
@@ -15,4 +15,5 @@ PyJapanglish
 python-dotenv
 six
 SpeechRecognition
+tiktoken
 weaviate-client

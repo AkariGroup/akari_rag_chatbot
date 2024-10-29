@@ -33,7 +33,7 @@ class WeaviateRagUploader(object):
         headers = {"X-OpenAI-Api-Key": OPENAI_APIKEY}
         if COHERE_APIKEY is not None:
             headers["X-Cohere-Api-Key"] = COHERE_APIKEY
-        self.client = weaviate.connect_to_local(headers=headers)
+        self.client = weaviate.connect_to_local(port=10080,headers=headers)
 
         self.text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
             chunk_size=chunk_size,

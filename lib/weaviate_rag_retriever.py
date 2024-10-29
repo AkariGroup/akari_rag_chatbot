@@ -22,7 +22,7 @@ class WeaviateRagRetriever(object):
         if COHERE_APIKEY is not None:
             headers["X-Cohere-Api-Key"] = COHERE_APIKEY
             self.cohere_rerank = True
-        self.client = weaviate.connect_to_local(headers=headers)
+        self.client = weaviate.connect_to_local(port=10080,headers=headers)
 
     def __del__(self) -> None:
         """

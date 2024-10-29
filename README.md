@@ -79,3 +79,14 @@ Weaviateにテキストファイルをアップロードする。
 2. スクリプトを実行する。  
    `cd script`  
    `./rag_chatbot.sh {1.でVoicevoxを起動したPCのIPアドレス} {akari_motion_serverのパス}`  
+
+## Weaviateへのデータ追加、対話までのテスト方法
+ここでは、サンプルのテキストを使ったWeaviateへのデータ追加、対話アプリへの適用方法を説明します。  
+
+### サンプルデータの追加  
+`data_sample` 直下にAKARIの情報を記載したサンプルのテキストファイルが2つあります。  
+まずはこれをweaviateに追加してみます。
+
+`python3 weaviate_uploader.py -c Test -p data_sample/`
+
+これを実行すると、`Test` というコレクション名に2つのテキストファイルが追加されます。
