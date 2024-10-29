@@ -80,13 +80,51 @@ Weaviateにテキストファイルをアップロードする。
    `cd script`  
    `./rag_chatbot.sh {1.でVoicevoxを起動したPCのIPアドレス} {akari_motion_serverのパス}`  
 
-## Weaviateへのデータ追加、対話までのテスト方法
+
+## Weaviateへのデータ追加、対話までの流れ
 ここでは、サンプルのテキストを使ったWeaviateへのデータ追加、対話アプリへの適用方法を説明します。  
 
 ### サンプルデータの追加  
 `data_sample` 直下にAKARIの情報を記載したサンプルのテキストファイルが2つあります。  
-まずはこれをweaviateに追加してみます。
+まずはこれをweaviateに追加してみます。  
 
-`python3 weaviate_uploader.py -c Test -p data_sample/`
+`python3 weaviate_uploader.py -c Test -p data_sample/`  
 
-これを実行すると、`Test` というコレクション名に2つのテキストファイルが追加されます。
+これを実行すると、`Test` というコレクション名の中に2つのテキストファイルが追加されます。  
+テキストファイルは、指定した文字数で分割され、各オブジェクトに登録されます。  
+
+### Weaviateの内容確認
+先程追加したデータが正しく登録されているか確認します。  
+
+`python3 weaviate_get_objects_example.py -c Test`
+
+これを実行すると、`Test` というコレクション内に登録されているオブジェクトの一覧が表示されます。  
+オブジェクトに分割されたテキストファイルの内容が確認できればOKです。  
+
+### Weaviateの検索テスト
+Weaviateの検索機能をテストします。  
+
+`python3 weaviate_search_example.py -c Test`  
+
+これを実行すると、テキスト入力を求められます。  
+テキストを入力してからEnterを押すと、そのテキストに関連する オブジェクトを検索し、その結果を表示します。  
+検索はベクトル類似度による検索と、キーワードによる全文検索を組み合わせたハイブリッド検索により行われます。  
+例えば"AKARIに使われているCPUは？"検索すると、CPUについて記載したオブジェクトが最初に表示され、スコアが一番高いことが分かると思います。
+
+### Weaviateを用いた文章生成
+Weaviateの検索結果を元に文章生成を行います。
+
+`python3 weaviate_qa_example.py -c Test`
+
+これを実行すると、テキスト入力を求められます。  
+テキストを入力してからEnterを押すと、そのテキストに関連する オブジェクトを検索し、その内容を元にLLMで文章生成を行います。  
+例えば"AKARIに使われているCPUは？"検索すると、"AKARIには、Intelの第8世代Core m3-8100Yを搭載したシングルボードコンピュータ、LattePanda Alpha 864sが使われています。"といったような、検索結果に基づいた文章が生成されると思います。  
+
+### 音声対話アプリの実行
+最後に、上記の"Weaviateを用いた音声対話の起動方法" の中で、rag_gpt_publisherを
+   `python3 rag_gpt_publisher.py -c Test`  
+
+で起動すると、この知識を元にした音声対話が可能となります。  
+これを参考に、各自のデータをWeaviateに登録し、音声対話アプリを実行してみてください。  
+
+

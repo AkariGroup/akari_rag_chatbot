@@ -46,6 +46,7 @@ def main() -> None:
             print(f"explain_score: {p.metadata.explain_score}")
             print(f"source: {p.properties['source']}")
             print(f"content: {p.properties['content']}")
+            print("====================================")
             print()
 
 
