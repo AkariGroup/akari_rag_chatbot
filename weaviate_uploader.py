@@ -39,8 +39,9 @@ def main() -> None:
         collection_name=args.collection,
         remove_collection=args.remove,
     )
-
     file_paths = []
+    if args.path is None:
+        print("Path is not available")
     for root, dirs, files in os.walk(args.path):
         for file in files:
             file_paths.append(os.path.join(root, file))

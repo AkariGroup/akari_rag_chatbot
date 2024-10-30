@@ -12,7 +12,6 @@ from .conf import COHERE_APIKEY, OPENAI_APIKEY
 class WeaviateRagUploader(object):
     def __init__(
         self,
-        collection_name: str,
         weaviate_url: str = "http://localhost:8080",
         chunk_size: int = 512,
         chunk_overlap: int = 128,
@@ -46,7 +45,6 @@ class WeaviateRagUploader(object):
         self.check_collection_available(self.collection_name)
         if remove_collection:
             self.delete_collection()
-        self.ensure_collection_exists()
 
     def __del__(self):
         """
@@ -139,6 +137,7 @@ class WeaviateRagUploader(object):
         Returns:
             str: アップロードされたチャンクのID
         """
+        self.ensure_collection_exists()
         chunk_ids = []
         if date is None:
             date = datetime.now(timezone.utc)
