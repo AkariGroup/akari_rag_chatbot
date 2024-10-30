@@ -23,7 +23,7 @@ class GptServer(gpt_server_pb2_grpc.GptServerServiceServicer):
     chatGPTにtextを送信し、返答をvoice_serverに送るgRPCサーバ
     """
 
-    def __init__(self,collection_name:str) -> None:
+    def __init__(self, collection_name: str) -> None:
         """
         コンストラクタ
         Args:
@@ -33,10 +33,11 @@ class GptServer(gpt_server_pb2_grpc.GptServerServiceServicer):
         self.SYSTEM_PROMPT_PATH = (
             f"{os.path.dirname(os.path.realpath(__file__))}/config/system_prompt.txt"
         )
-        content = open(self.SYSTEM_PROMPT_PATH, "r").read()
-        self.messages = [
-            self.chat_stream_akari_grpc.create_message(content, role="system")
-        ]
+        self.messages = []
+        with open(self.SYSTEM_PROMPT_PATH, "r") as f:
+            self.messages = [
+                self.chat_stream_akari_grpc.create_message(f.read(), role="system")
+            ]
         voice_channel = grpc.insecure_channel("localhost:10002")
         self.stub = voice_server_pb2_grpc.VoiceServerServiceStub(voice_channel)
         self.retriever = WeaviateRagRetriever()
@@ -60,7 +61,7 @@ class GptServer(gpt_server_pb2_grpc.GptServerServiceServicer):
         if is_finish:
             # 最終応答。高速生成するために、モデルはgpt-4o
             # テキストをWeaviateで検索
-            response = self.retriever.hybrid_search(
+            weaviate_response = self.retriever.hybrid_search(
                 collection_name=self.collections,
                 text=content,
                 limit=3,
@@ -68,13 +69,14 @@ class GptServer(gpt_server_pb2_grpc.GptServerServiceServicer):
                 rerank=False,
             )
             contexts = ""
-            for p in response.objects:
+            for p in weaviate_response.objects:
                 contexts += p.properties["content"]
             # system_promptをWeaviateの検索結果を含んだ文に変更
             system_prompt = system_prompt_creator(context=contexts)
-            tmp_messages[0] = self.chat_stream.create_message(
+            tmp_messages[0] = self.chat_stream_akari_grpc.create_message(
                 system_prompt, role="system"
             )
+            response = ""
             for sentence in self.chat_stream_akari_grpc.chat(
                 tmp_messages, model="gpt-4o"
             ):
@@ -121,7 +123,9 @@ def main() -> None:
     )
     args = parser.parse_args()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    gpt_server_pb2_grpc.add_GptServerServiceServicer_to_server(GptServer(), server)
+    gpt_server_pb2_grpc.add_GptServerServiceServicer_to_server(
+        GptServer(collection_name=args.collections), server
+    )
     server.add_insecure_port(args.ip + ":" + args.port)
     server.start()
     print(f"gpt_publisher start. port: {args.port}")
