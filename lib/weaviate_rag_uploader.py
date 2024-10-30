@@ -15,6 +15,7 @@ class WeaviateRagUploader(object):
         weaviate_url: str = "http://localhost:8080",
         chunk_size: int = 512,
         chunk_overlap: int = 128,
+        collection_name: str = "Test",
         remove_collection: bool = False,
     ):
         """
@@ -32,7 +33,7 @@ class WeaviateRagUploader(object):
         headers = {"X-OpenAI-Api-Key": OPENAI_APIKEY}
         if COHERE_APIKEY is not None:
             headers["X-Cohere-Api-Key"] = COHERE_APIKEY
-        self.client = weaviate.connect_to_local(port=10080,headers=headers)
+        self.client = weaviate.connect_to_local(port=10080, headers=headers)
 
         self.text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
             chunk_size=chunk_size,
@@ -45,6 +46,7 @@ class WeaviateRagUploader(object):
         self.check_collection_available(self.collection_name)
         if remove_collection:
             self.delete_collection()
+        self.collection = None
 
     def __del__(self):
         """
@@ -76,6 +78,8 @@ class WeaviateRagUploader(object):
 
     def ensure_collection_exists(self) -> None:
         """コレクションが存在しない場合は作成する"""
+        if self.collection is not None:
+            return
         if self.check_collection_available(self.collection_name):
             print("Collection already exists")
             self.collection = self.client.collections.get(self.collection_name)
