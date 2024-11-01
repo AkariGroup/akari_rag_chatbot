@@ -18,6 +18,12 @@ def main() -> None:
         help="Source name",
     )
     parser.add_argument(
+        "-d",
+        "--sort_by_date",
+        action="store_true",
+        help="Sort object by date",
+    )
+    parser.add_argument(
         "-s",
         "--show_all",
         action="store_true",
@@ -37,9 +43,12 @@ def main() -> None:
         )
     else:
         list = weaviate_controller.get_objects(collection_name=args.collection)
-    list.sort(
-        key=lambda item: (item.properties["source"], item.properties["chunk_index"])
-    )
+    if args.sort_by_date:
+        list.sort(key=lambda item: item.properties["date"])
+    else:
+        list.sort(
+            key=lambda item: (item.properties["source"], item.properties["chunk_index"])
+        )
     for item in list:
         print(f"source: {item.properties['source']}")
         print(f"uuid: {item.uuid}")
