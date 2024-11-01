@@ -1,0 +1,3 @@
+[submodule "lib/akari_chatgpt_bot"]
+	path = lib/akari_chatgpt_bot
+	url = https://github.com/AkariGroup/akari_chatgpt_bot.git
