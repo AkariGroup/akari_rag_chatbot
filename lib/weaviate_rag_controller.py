@@ -29,7 +29,7 @@ class WeaviateRagController(object):
         if COHERE_APIKEY is not None:
             headers["X-Cohere-Api-Key"] = COHERE_APIKEY
             self.cohere_rerank = True
-        self.client = weaviate.connect_to_local(port=8080, headers=headers)
+        self.client = weaviate.connect_to_local(port=port, headers=headers)
 
     def __del__(self) -> None:
         """
@@ -152,6 +152,8 @@ class WeaviateRagController(object):
             list: オブジェクトのリスト
         """
         collection_name = collection_name.capitalize()
+        if not self.check_collection_available(collection_name):
+            return []
         collection = self.client.collections.get(collection_name)
         object_list = []
         for item in collection.iterator():
@@ -170,6 +172,8 @@ class WeaviateRagController(object):
             List[Any]: オブジェクトのリスト
         """
         all_objects = self.get_objects(collection_name=collection_name)
+        if len(all_objects) == 0:
+            return []
         objects = [obj for obj in all_objects if obj.properties["source"] == source]
         return objects
 

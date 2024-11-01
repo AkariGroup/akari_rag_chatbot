@@ -1,7 +1,7 @@
 import argparse
 import time
 
-from lib.chat import ChatStream
+from lib.akari_chatgpt_bot.lib.chat_akari import ChatStreamAkari
 from lib.prompt_creator import system_prompt_creator
 from lib.weaviate_rag_controller import WeaviateRagController
 
@@ -19,14 +19,19 @@ def main() -> None:
     parser.add_argument(
         "-c",
         "--collection",
-        default="Tommy",
         type=str,
         help="Weaviate collection name",
     )
     args = parser.parse_args()
-    chat_stream = ChatStream()
+    chat_stream = ChatStreamAkari()
     weaviate_controller = WeaviateRagController()
     messages_list = []
+    if args.collection is None:
+        print(
+            "Collection name is not available. Please specify collection name with '-c {collection_name}'."
+        )
+        print(f"Current collections: {weaviate_controller.get_collections()}")
+        return
     for i in range(0, len(args.model)):
         messages_list.append([""])
     while True:
@@ -53,7 +58,7 @@ def main() -> None:
         """
         for p in response.objects:
             contexts += p.properties["content"]
-        system_prompt = system_prompt_creator(prev_context="", context=contexts)
+        system_prompt = system_prompt_creator(context=contexts)
         for i, model in enumerate(args.model):
             messages_list[i][0] = chat_stream.create_message(
                 system_prompt, role="system"
