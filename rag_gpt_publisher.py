@@ -7,7 +7,7 @@ from concurrent import futures
 import grpc
 from lib.akari_chatgpt_bot.lib.chat_akari_grpc import ChatStreamAkariGrpc
 from lib.prompt_creator import system_prompt_creator
-from lib.weaviate_rag_retriever import WeaviateRagRetriever
+from lib.weaviate_rag_controller import WeaviateRagController
 
 sys.path.append(
     os.path.join(os.path.dirname(__file__), "lib/akari_chatgpt_bot/lib/grpc")
@@ -40,7 +40,7 @@ class GptServer(gpt_server_pb2_grpc.GptServerServiceServicer):
             ]
         voice_channel = grpc.insecure_channel("localhost:10002")
         self.stub = voice_server_pb2_grpc.VoiceServerServiceStub(voice_channel)
-        self.retriever = WeaviateRagRetriever()
+        self.weaviate_controller = WeaviateRagController()
         self.collections = collection_name
 
     def SetGpt(
@@ -61,7 +61,7 @@ class GptServer(gpt_server_pb2_grpc.GptServerServiceServicer):
         if is_finish:
             # 最終応答。高速生成するために、モデルはgpt-4o
             # テキストをWeaviateで検索
-            weaviate_response = self.retriever.hybrid_search(
+            weaviate_response = self.weaviate_controller.hybrid_search(
                 collection_name=self.collections,
                 text=content,
                 limit=3,

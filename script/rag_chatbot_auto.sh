@@ -26,5 +26,5 @@ cd ../
  gnome-terminal --title="voice_server" -- bash -ic "python3 lib/akari_chatgpt_bot/voicevox_server.py --voicevox_local --voice_host ${ip}"
  gnome-terminal --title="rag_gpt_publisher" -- bash -ic "python3 rag_gpt_publisher.py"
  gnome-terminal --title="speech_publisher" -- bash -ic "python3 lib/akari_chatgpt_bot/speech_publisher.py --timeout 0.8 --auto"
- gnome-terminal --title="talk_controller" -- bash -ic "python3 talk_controller_client.py"
+ gnome-terminal --title="talk_controller" -- bash -ic "python3 lib/akari_chatgpt_bot/talk_controller_client.py"
 )
