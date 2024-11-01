@@ -12,7 +12,6 @@ def main() -> None:
         "-c",
         "--collection",
         type=str,
-        default="Test",
         help="Weaviate collection",
     )
     parser.add_argument(
@@ -24,6 +23,11 @@ def main() -> None:
     args = parser.parse_args()
     # アップローダーの初期化
     weaviate_controller = WeaviateRagController()
+    if args.collection is None:
+        print(
+            "Collection name is not available. Please specify collection name with '-c {collection_name}'."
+        )
+        print(f"Current collections: {weaviate_controller.get_collections()}")
     if args.remove:
         weaviate_controller.remove_collection(collection_name=args.collection)
     file_paths = []

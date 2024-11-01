@@ -1,9 +1,9 @@
 import argparse
 import time
 
-from lib.akari_chatgpt_bot.lib.chat_akari import ChatStreamAkari
+from lib.chat import ChatStream
 from lib.prompt_creator import system_prompt_creator
-from lib.weaviate_rag_retriever import WeaviateRagRetriever
+from lib.weaviate_rag_controller import WeaviateRagController
 
 
 def main() -> None:
@@ -18,14 +18,14 @@ def main() -> None:
     )
     parser.add_argument(
         "-c",
-        "--collections",
-        default="Test",
+        "--collection",
+        default="Tommy",
         type=str,
         help="Weaviate collection name",
     )
     args = parser.parse_args()
-    chat_stream = ChatStreamAkari()
-    retriever = WeaviateRagRetriever()
+    chat_stream = ChatStream()
+    weaviate_controller = WeaviateRagController()
     messages_list = []
     for i in range(0, len(args.model)):
         messages_list.append([""])
@@ -33,12 +33,12 @@ def main() -> None:
         print("文章をキーボード入力後、Enterを押してください。")
         text = input("Input: ")
         rag_start = time.time()
-        response = retriever.hybrid_search(
+        response = weaviate_controller.hybrid_search(
             text=text,
             limit=3,
             alpha=0.75,
             rerank=False,
-            collection_name=args.collections,
+            collection_name=args.collection,
         )
         print(f"search time: {time.time() - rag_start:.2f} [s]")
         contexts = ""
@@ -53,7 +53,7 @@ def main() -> None:
         """
         for p in response.objects:
             contexts += p.properties["content"]
-        system_prompt = system_prompt_creator(context=contexts)
+        system_prompt = system_prompt_creator(prev_context="", context=contexts)
         for i, model in enumerate(args.model):
             messages_list[i][0] = chat_stream.create_message(
                 system_prompt, role="system"

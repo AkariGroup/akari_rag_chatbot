@@ -1,14 +1,14 @@
 import argparse
 
-from lib.weaviate_rag_retriever import WeaviateRagRetriever
+from lib.weaviate_rag_controller import WeaviateRagController
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-c",
-        "--collections",
-        default="Test",
+        "--collection",
+        default="Tommy",
         type=str,
         help="Weaviate collection name",
     )
@@ -19,9 +19,9 @@ def main() -> None:
         help="Show objects in the collection",
     )
     args = parser.parse_args()
-    retriever = WeaviateRagRetriever()
+    weaviate_controller = WeaviateRagController()
     if args.show_objects:
-        list = retriever.get_objects(collection_name=args.collections)
+        list = weaviate_controller.get_objects(collection_name=args.collection)
         for item in list:
             print(f"source: {item.properties['source']}")
             print(f"uuid: {item.uuid}")
@@ -32,12 +32,12 @@ def main() -> None:
     while True:
         print("文章をキーボード入力後、Enterを押してください。")
         text = input("Input: ")
-        response = retriever.hybrid_search(
+        response = weaviate_controller.hybrid_search(
             text=text,
             limit=3,
             alpha=0.75,
             rerank=False,
-            collection_name=args.collections,
+            collection_name=args.collection,
         )
         for p in response.objects:
             print(f"distance: {p.metadata.distance}")
@@ -46,7 +46,6 @@ def main() -> None:
             print(f"explain_score: {p.metadata.explain_score}")
             print(f"source: {p.properties['source']}")
             print(f"content: {p.properties['content']}")
-            print("====================================")
             print()
 
 

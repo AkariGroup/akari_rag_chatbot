@@ -7,8 +7,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-c",
-        "--collections",
-        default="Test",
+        "--collection",
         type=str,
         help="Weaviate collection name",
     )
@@ -26,11 +25,21 @@ def main() -> None:
     )
     args = parser.parse_args()
     weaviate_controller = WeaviateRagController()
+    if args.collection is None:
+        print(
+            "Collection name is not available. Please specify collection name with '-c {collection_name}'."
+        )
+        print(f"Current collections: {weaviate_controller.get_collections()}")
+        return
     if args.name is not None:
-        list = weaviate_controller.get_objects_by_source(source=args.name, collection_name=args.collections)
+        list = weaviate_controller.get_objects_by_source(
+            source=args.name, collection_name=args.collection
+        )
     else:
-        list = weaviate_controller.get_objects(collection_name=args.collections)
-    list.sort(key=lambda item: (item.properties['source'], item.properties['chunk_index']))
+        list = weaviate_controller.get_objects(collection_name=args.collection)
+    list.sort(
+        key=lambda item: (item.properties["source"], item.properties["chunk_index"])
+    )
     for item in list:
         print(f"source: {item.properties['source']}")
         print(f"uuid: {item.uuid}")

@@ -1,11 +1,11 @@
 import os
-
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
 import weaviate
 import weaviate.classes as wvc
-from weaviate.classes.query import Rerank
-from typing import Any, Dict, List, Optional
 from langchain.text_splitter import CharacterTextSplitter
+from weaviate.classes.query import Rerank
 
 from .conf import COHERE_APIKEY, OPENAI_APIKEY
 
@@ -15,11 +15,12 @@ class WeaviateRagController(object):
     Weaviateを使ったRAGのリトリーバ
     """
 
-    def __init__(
-        self,
-    ) -> None:
+    def __init__(self, port: int = 10080) -> None:
         """
         コンストラクタ
+
+        Args:
+            port(int): Weaviateのポート番号
         """
         self.cohere_rerank = False
         if OPENAI_APIKEY is None:
@@ -28,9 +29,7 @@ class WeaviateRagController(object):
         if COHERE_APIKEY is not None:
             headers["X-Cohere-Api-Key"] = COHERE_APIKEY
             self.cohere_rerank = True
-        self.chunk_size = 512
-        self.chunk_overlap = 128
-        self.client = weaviate.connect_to_local(port=10080, headers=headers)
+        self.client = weaviate.connect_to_local(port=8080, headers=headers)
 
     def __del__(self) -> None:
         """
@@ -56,11 +55,12 @@ class WeaviateRagController(object):
         Args:
             name(str): コレクション名
         """
+        collection_name = collection_name.capitalize()
         print(f"Removing collection: {collection_name}")
         self.client.collections.delete(collection_name)
         return
 
-    def check_collection_available(self, name: str) -> bool:
+    def check_collection_available(self, collection_name: str) -> bool:
         """コレクションが存在するか確認
 
         Args:
@@ -69,23 +69,27 @@ class WeaviateRagController(object):
         Returns:
             bool: コレクションが存在する場合True
         """
+        collection_name = collection_name.capitalize()
         try:
             collection_list = self.get_collections()
-            if name.capitalize() in collection_list:
+            if collection_name in collection_list:
                 return True
             else:
                 return False
         except weaviate.exceptions.WeaviateCollectionDoesNotExist:
             return False
 
-    def remove_object_by_uuid(self, uuid: str) -> None:
+    def remove_object_by_uuid(self, collection_name: str, uuid: str) -> None:
         """
         UUIDでオブジェクトを削除
 
         Args:
+            collection_name(str): コレクション名
             uuid(str): オブジェクトのUUID
         """
-        self.client.data_object.delete(uuid)
+        collection_name = collection_name.capitalize()
+        collection = self.client.collections.get(collection_name)
+        collection.data.delete_by_id(uuid)
         return
 
     def ensure_collection_exists(self, collection_name) -> None:
@@ -95,6 +99,7 @@ class WeaviateRagController(object):
             collection_name(str): コレクション名
 
         """
+        collection_name = collection_name.capitalize()
         if self.check_collection_available(collection_name):
             return
         self.client.collections.create(
@@ -146,6 +151,7 @@ class WeaviateRagController(object):
         Returns:
             list: オブジェクトのリスト
         """
+        collection_name = collection_name.capitalize()
         collection = self.client.collections.get(collection_name)
         object_list = []
         for item in collection.iterator():
@@ -188,6 +194,7 @@ class WeaviateRagController(object):
         Returns:
             str: 検索結果
         """
+        collection_name = collection_name.capitalize()
         collection = self.client.collections.get(collection_name)
         response = ""
         if rerank:
@@ -215,24 +222,6 @@ class WeaviateRagController(object):
             )
         return response
 
-    def set_chunk_size(self, chunk_size: int) -> None:
-        """
-        チャンクサイズを設定
-
-        Args:
-            chunk_size(int): チャンクサイズ
-        """
-        self.chunk_size = chunk_size
-
-    def set_chunk_overlap(self, chunk_overlap: int) -> None:
-        """
-        チャンクオーバーラップを設定
-
-        Args:
-            chunk_overlap(int): チャンクオーバーラップ
-        """
-        self.chunk_overlap = chunk_overlap
-
     def upload_chunks(
         self,
         collection_name: str,
@@ -247,12 +236,12 @@ class WeaviateRagController(object):
             collection_name(str): コレクション名
             chunks(List[str]): チャンクリスト
             source(str): ソースファイル名。デフォルトは""。
-            chunk_index(int): チャンクインデックス番号。デフォルトは0。
             date(datetime): 更新日時。ない場合は現在時刻がつく。デフォルトはNone。
 
         Returns:
             str: アップロードされたチャンクのID
         """
+        collection_name = collection_name.capitalize()
         self.ensure_collection_exists(collection_name=collection_name)
         collection = self.client.collections.get(collection_name)
         chunk_ids = []
@@ -284,6 +273,8 @@ class WeaviateRagController(object):
         collection_name: str,
         text: str,
         source: str,
+        chunk_size: int = 512,
+        chunk_overlap: int = 128,
     ) -> List[str]:
         """
         テキストを分割してWeaviateにアップロード
@@ -299,8 +290,8 @@ class WeaviateRagController(object):
             List[str]: アップロードされたチャンクのIDリスト
         """
         text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
-            chunk_size=self.chunk_size,
-            chunk_overlap=self.chunk_overlap,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
             separator="\n\n",
         )
         # テキストを分割
@@ -316,7 +307,12 @@ class WeaviateRagController(object):
         return result
 
     def upload_text_file(
-        self, collection_name: str, file_path: str, metadata: Optional[Dict] = None
+        self,
+        collection_name: str,
+        file_path: str,
+        metadata: Optional[Dict] = None,
+        chunk_size: int = 512,
+        chunk_overlap: int = 128,
     ) -> List[str]:
         """
         ファイルを読み込んでWeaviateにアップロード
@@ -325,29 +321,44 @@ class WeaviateRagController(object):
             collection_name(str): コレクション名
             file_path(str): ファイルパス
             metadata(Dict): メタデータ
+            chunk_size(int): チャンクサイズ
+            chunk_overlap(int): チャンクのオーバーラップ
 
         Returns:
             List[str]: アップロードされたチャンクのIDリスト
 
         """
-        # try:
-        with open(file_path, "r", encoding="utf-8") as file:
-            text = file.read()
-            file_name = os.path.basename(file_path)
-            return self.upload_text(
-                collection_name=collection_name,
-                text=text,
-                source=file_name,
-            )
-        # except Exception as e:
-        #    print(f"Error processing {file_path}: {str(e)}")
-        #    return []
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                text = file.read()
+                file_name = os.path.basename(file_path)
+                same_source_objects = self.get_objects_by_source(
+                    collection_name=collection_name, source=file_name
+                )
+                if len(same_source_objects) > 0:
+                    print(f"Source name: {file_name} is already uploaded. Overwrite")
+                    for obj in same_source_objects:
+                        self.remove_object_by_uuid(
+                            collection_name=collection_name, uuid=obj.uuid
+                        )
+                return self.upload_text(
+                    collection_name=collection_name,
+                    text=text,
+                    source=file_name,
+                    chunk_size=chunk_size,
+                    chunk_overlap=chunk_overlap,
+                )
+        except Exception as e:
+            print(f"Error processing {file_path}: {str(e)}")
+            return []
 
     def upload_files(
         self,
         collection_name: str,
         file_paths: List[str],
         metadata: Optional[Dict] = None,
+        chunk_size: int = 512,
+        chunk_overlap: int = 128,
     ) -> Dict[str, List[str]]:
         """
         複数のファイルをアップロード
@@ -356,6 +367,8 @@ class WeaviateRagController(object):
             collection_name(str): コレクション名
             file_paths(List[str]): ファイルパスリスト
             metadata(Dict): メタデータ
+            chunk_size(int): チャンクサイズ
+            chunk_overlap(int): チャンクのオーバーラップ
 
         Returns:
             Dict[str, List[str]]: アップロードされたファイルとチャンクIDのリスト
@@ -367,6 +380,8 @@ class WeaviateRagController(object):
                     collection_name=collection_name,
                     file_path=file_path,
                     metadata=metadata,
+                    chunk_size=chunk_size,
+                    chunk_overlap=chunk_overlap,
                 )
                 results[file_path] = chunk_ids
                 print(f"Uploaded {file_path}: {len(chunk_ids)} chunks")
