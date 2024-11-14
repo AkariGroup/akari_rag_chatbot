@@ -20,6 +20,7 @@ def main() -> None:
         "-c",
         "--collection",
         type=str,
+        default="Test",
         help="Weaviate collection name",
     )
     args = parser.parse_args()

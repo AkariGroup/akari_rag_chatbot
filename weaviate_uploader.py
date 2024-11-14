@@ -12,6 +12,7 @@ def main() -> None:
         "-c",
         "--collection",
         type=str,
+        default="Test",
         help="Weaviate collection",
     )
     parser.add_argument(

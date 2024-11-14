@@ -8,7 +8,7 @@ def main() -> None:
     parser.add_argument(
         "-c",
         "--collection",
-        default="Tommy",
+        default="Test",
         type=str,
         help="Weaviate collection name",
     )
