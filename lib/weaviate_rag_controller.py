@@ -314,6 +314,7 @@ class WeaviateRagController(object):
         self,
         collection_name: str,
         file_path: str,
+        parent_path: Optional[str] = None,
         metadata: Optional[Dict] = None,
         chunk_size: int = 512,
         chunk_overlap: int = 128,
@@ -324,6 +325,7 @@ class WeaviateRagController(object):
         Args:
             collection_name(str): コレクション名
             file_path(str): ファイルパス
+            parent_path(str): 親ディレクトリ。指定した場合はファイルパスから親ディレクトリを除去し、、パスをtitleに使用
             metadata(Dict): メタデータ
             chunk_size(int): チャンクサイズ
             chunk_overlap(int): チャンクのオーバーラップ
@@ -335,7 +337,10 @@ class WeaviateRagController(object):
         try:
             with open(file_path, "r", encoding="utf-8") as file:
                 text = file.read()
-                file_name = os.path.basename(file_path)
+                if parent_path is None:
+                    file_name = os.path.basename(file_path)
+                else:
+                    file_name = file_path.replace(parent_path, "")
                 same_source_objects = self.get_objects_by_source(
                     collection_name=collection_name, source=file_name
                 )
@@ -360,6 +365,7 @@ class WeaviateRagController(object):
         self,
         collection_name: str,
         file_paths: List[str],
+        parent_path: Optional[str] = None,
         metadata: Optional[Dict] = None,
         chunk_size: int = 512,
         chunk_overlap: int = 128,
@@ -370,6 +376,7 @@ class WeaviateRagController(object):
         Args:
             collection_name(str): コレクション名
             file_paths(List[str]): ファイルパスリスト
+            parent_path(str): 親ディレクトリ。指定した場合はファイルパスから親ディレクトリを除去し、パスをtitleに使用
             metadata(Dict): メタデータ
             chunk_size(int): チャンクサイズ
             chunk_overlap(int): チャンクのオーバーラップ
@@ -383,6 +390,7 @@ class WeaviateRagController(object):
                 chunk_ids = self.upload_text_file(
                     collection_name=collection_name,
                     file_path=file_path,
+                    parent_path=parent_path,
                     metadata=metadata,
                     chunk_size=chunk_size,
                     chunk_overlap=chunk_overlap,

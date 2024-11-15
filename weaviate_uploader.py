@@ -44,7 +44,9 @@ def main() -> None:
         file_paths.append(args.path)
     if len(file_paths) > 0:
         results = weaviate_controller.upload_files(
-            collection_name=args.collection, file_paths=file_paths
+            collection_name=args.collection,
+            file_paths=file_paths,
+            parent_path=args.path,
         )
     else:
         print(f"No files found in {args.path}")
