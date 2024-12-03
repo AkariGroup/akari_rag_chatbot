@@ -15,7 +15,7 @@ class WeaviateRagController(object):
     Weaviateを使ったRAGのリトリーバ
     """
 
-    def __init__(self, port: int = 10080) -> None:
+    def __init__(self, host: str = "127.0.0.1", port: int = 10080) -> None:
         """
         コンストラクタ
 
@@ -29,7 +29,7 @@ class WeaviateRagController(object):
         if COHERE_APIKEY is not None:
             headers["X-Cohere-Api-Key"] = COHERE_APIKEY
             self.cohere_rerank = True
-        self.client = weaviate.connect_to_local(port=port, headers=headers)
+        self.client = weaviate.connect_to_local(host=host, port=port, headers=headers)
 
     def __del__(self) -> None:
         """

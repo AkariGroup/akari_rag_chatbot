@@ -5,6 +5,8 @@ from lib.weaviate_rag_controller import WeaviateRagController
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Weaviate host")
+    parser.add_argument("--port", type=int, default=10080, help="Weaviate port")
     parser.add_argument(
         "-c",
         "--collection",
@@ -19,7 +21,7 @@ def main() -> None:
         help="Show objects in the collection",
     )
     args = parser.parse_args()
-    weaviate_controller = WeaviateRagController()
+    weaviate_controller = WeaviateRagController(host=args.host, port=args.port)
     if args.show_objects:
         list = weaviate_controller.get_objects(collection_name=args.collection)
         for item in list:

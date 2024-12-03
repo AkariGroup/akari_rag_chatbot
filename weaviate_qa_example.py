@@ -8,6 +8,8 @@ from lib.weaviate_rag_controller import WeaviateRagController
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Weaviate host")
+    parser.add_argument("--port", type=int, default=10080, help="Weaviate port")
     parser.add_argument(
         "-m",
         "--model",
@@ -25,7 +27,7 @@ def main() -> None:
     )
     args = parser.parse_args()
     chat_stream = ChatStreamAkari()
-    weaviate_controller = WeaviateRagController()
+    weaviate_controller = WeaviateRagController(host=args.host, port=args.port)
     messages_list = []
     if args.collection is None:
         print(

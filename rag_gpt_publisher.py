@@ -23,7 +23,12 @@ class GptServer(gpt_server_pb2_grpc.GptServerServiceServicer):
     chatGPTにtextを送信し、返答をvoice_serverに送るgRPCサーバ
     """
 
-    def __init__(self, collection_name: str) -> None:
+    def __init__(
+        self,
+        collection_name: str,
+        weaviate_host: str = "127.0.0.1",
+        weaviate_port: int = 10080,
+    ) -> None:
         """
         コンストラクタ
         Args:
@@ -40,7 +45,9 @@ class GptServer(gpt_server_pb2_grpc.GptServerServiceServicer):
             ]
         voice_channel = grpc.insecure_channel("localhost:10002")
         self.stub = voice_server_pb2_grpc.VoiceServerServiceStub(voice_channel)
-        self.weaviate_controller = WeaviateRagController()
+        self.weaviate_controller = WeaviateRagController(
+            host=weaviate_host, port=weaviate_port
+        )
         self.collections = collection_name
 
     def SetGpt(
@@ -109,6 +116,12 @@ class GptServer(gpt_server_pb2_grpc.GptServerServiceServicer):
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--weaviate_host", type=str, default="127.0.0.1", help="Weaviate host"
+    )
+    parser.add_argument(
+        "--weaviate_port", type=int, default=10080, help="Weaviate port"
+    )
+    parser.add_argument(
         "--ip", help="Gpt server ip address", default="127.0.0.1", type=str
     )
     parser.add_argument(
@@ -124,7 +137,12 @@ def main() -> None:
     args = parser.parse_args()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     gpt_server_pb2_grpc.add_GptServerServiceServicer_to_server(
-        GptServer(collection_name=args.collections), server
+        GptServer(
+            collection_name=args.collections,
+            weaviate_host=args.weaviate_host,
+            weaviate_port=args.weaviate_port,
+        ),
+        server,
     )
     server.add_insecure_port(args.ip + ":" + args.port)
     server.start()

@@ -7,6 +7,8 @@ from lib.weaviate_rag_controller import WeaviateRagController
 # 使用例
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Weaviate host")
+    parser.add_argument("--port", type=int, default=10080, help="Weaviate port")
     parser.add_argument("-p", "--path", type=str, help="path to load text files")
     parser.add_argument(
         "-c",
@@ -23,7 +25,7 @@ def main() -> None:
     )
     args = parser.parse_args()
     # アップローダーの初期化
-    weaviate_controller = WeaviateRagController()
+    weaviate_controller = WeaviateRagController(host=args.host, port=args.port)
     if args.collection is None:
         print(
             "Collection name is not available. Please specify collection name with '-c {collection_name}'."

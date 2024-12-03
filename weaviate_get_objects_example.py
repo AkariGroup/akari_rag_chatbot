@@ -5,6 +5,8 @@ from lib.weaviate_rag_controller import WeaviateRagController
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Weaviate host")
+    parser.add_argument("--port", type=int, default=10080, help="Weaviate port")
     parser.add_argument(
         "-c",
         "--collection",
@@ -31,7 +33,7 @@ def main() -> None:
         help="Show all content in objects",
     )
     args = parser.parse_args()
-    weaviate_controller = WeaviateRagController()
+    weaviate_controller = WeaviateRagController(host=args.host, port=args.port)
     if args.collection is None:
         print(
             "Collection name is not available. Please specify collection name with '-c {collection_name}'."
